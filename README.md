@@ -1,7 +1,7 @@
 
 # Description:
 
-This is the "c" implementation of the KatCe terminal programm foramly written in Pascal.
+This is the "c" implementation of the KatCe terminal programm originaly written in Pascal.
 
 # From source to binary:
 
@@ -36,7 +36,7 @@ This converts an ascii text file into the KatCE own text format.
 ```bash
 asczukat [-i inputfile] -o outputfile
 ```
-If the input file is ommited the ascii text file is read from <stdin>.
+If the input file is ommited the ascii text file is read from STDIN.
 
 ## katzuasc
 This converts an KatCe text file into an ascii text file.
@@ -44,6 +44,6 @@ This converts an KatCe text file into an ascii text file.
 ```bash
 katceterm [-i inputfile] [-o outputfile]
 ```
-If the input file is ommited the ascii text file is read from <stdin>.
-And if the output file is ommited the converted file is send to <stdout>.
+If the input file is ommited the ascii text file is read from STDIN.
+And if the output file is ommited the converted file is send to STDOUT.
 
