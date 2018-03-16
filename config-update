@@ -1,0 +1,10 @@
+#! /bin/sh
+
+autoreconf
+
+if [ -r config.status ]; then
+  ./config.status --recheck
+fi
+
+exit 0
+

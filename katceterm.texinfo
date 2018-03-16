@@ -1,0 +1,25 @@
+\input texinfo	@c -*-texinfo-*-
+@c %**start of header
+@setfilename katceterm
+@settitle KatCe Term Manual
+@c %**end of header
+
+@copying
+No Copyright
+@end copying
+
+@dircategory Basics
+@direntry
+* KatUtils: (katutils).		KatCe utilities.
+* File formats: (katutils).	KatCe file formats.
+@end direntry
+
+@dircategory KatCe utilities
+@direntry
+* katceterm: (katutils)katceterm invocation.	KatCe terminal.
+* katzuasc: (katutils)katzuasc invocation.	Convert KatCe file to ASCII.
+* asczukat: (katutils)asczukat invocation.	Convert ASCII to KatCe file.
+@end direntry
+
+
+@bye

@@ -1,0 +1,26 @@
+
+1) add comandline options to katzuasc, asczukat and katceterm
+1.1) -t TabWidth			// default 1 tab is 8 spaces
+1.2) -d					// DOS style file output/input
+1.3) -u [default]		// Unix style file output/input
+DONE) -i InputFile		// input file for conversion
+DONE) -o OutputFile		// output file for conversion
+DONE) -s SerialLineSpeed	// let user define the line speed
+DONE) -l SerialLine		// let user define the serial line to use
+
+2) char conversion DOS/Atari charset to isoXXXX
+
+3) add printer support to katceterm.
+
+4) Let user specify default serial line with configure
+
+5) Language cleanup, today german and englisch is used in the source.
+
+6) Add support for internationalization library (libintl)
+   partial done
+
+7) Some systems may need replacement functions for strerror and usleep
+   (autoconf's meaning, may not realy needed for modern systems.)
+
+8) Write documentation
+

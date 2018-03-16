@@ -1,0 +1,660 @@
+Artikel: Applikationshinweise zum DUART 68681
+
+Hans-J÷rg Himmer÷der, Longbentonstr. 12, 4353 Oer-Erkenschwick
+Tel.: 02368-53954
+
+F’r die Prozessorfamilie 68000 sind eine Reihe interessanter
+Peripheriebausteine entwickelt worden, die optimal an die Busstruktur des
+68000 angepažt sind. Unter den Seriellwandlern konnte sich der DUART 68681
+besonders gut durchsetzen, man findet ihn auf fast allen Einplatinenrechnern
+und nat’rlich auch in gr÷žeren Systemen. Die besondere Verbreitung in EPAC's
+der verschiedensten Herk’nfte l„žt sich durch die Vielzahl von Funktionen
+erkl„ren, die auf engstem Raum untergebracht sind. So findet man
+
+- Zwei voneinander unabh„ngige voll-duplex-f„hige asynchrone Kan„le
+- Fifo-Pufferung f’r Ein- und Ausg„nge
+- einstellbare Baudraten f’r beide Datenrichtungen
+- integrierter Baudratengenerator mit eigenem Quarzoszillator
+- Acht Ausgangs- und sechs Eingangsportleitungen
+- 16-Bit Counter/Timer
+- vielfache Interruptm÷glichkeiten
+
+Der Anschluž an ein 68000-System ist denkbar einfach: Acht Daten und vier
+Adrežleitungen, R/NW, NCS, NReset und NDtack reichen aus. Sollen auch
+Interrupts ausgel÷st werden, so kommen NIRQ sowie NIAck (f’r evtl.
+Vektorinterrupt) hinzu.
+Falls der 68681 an einen 16-Bit Bus (68000, 68010, 68070) angeschlossen ist,
+so findet man seine Register nur unter geraden bzw. ungeraden Adress-Bytes,
+da ja nur 8 Datenbits angeschlossen sind.
+Da der Bustransfer asynchron erfolgt, ist eine Verbindung mit dem Prozessortakt
+nicht notwendig. Zur Versorgung mit einem geeigneten Takt dient der eingebaute
+Quarzoszillator, an den Quarze zwischen 2 und 4 MHz angeschlossen werden
+k÷nnen. ›blich ist hier ein 3,6864 MHz-Typ, mit dem ’ber die Teilertabellen
+alle ’blichen Baudraten abgerufen werden k÷nnen. Diese Frequenz erscheint nur
+auf den ersten Blick etwas merkw’rdig, teilt man diesen Takt durch 6, so
+erh„lt man 614400 Hz, also das 16-fache von 38400 Hz, die h÷chste gebr„uchliche
+Rate f’r RS 232 Schnittstellen.
+Andere Quarze sind auch m÷glich, 3 MHz w„ren z.B. f’r Midi-Schnittstellen
+(wird von Musiker ben÷tigt), die mit 31250 kBd ›bertragen, geeignet.
+
+Die nachfolgenden Anwendungsbeispiele decken nicht alle M÷glichkeiten des
+68681 ab, geben aber einen ›berblick ’ber die h„ufigsten Einsatzgebiete.
+
+Die Register
+------------
+Wir betrachten in diesem Zusammenhang nur die wichtigsten Einstellungen,
+f’r weitere M÷glichkeiten ist das Handbuch zu Rate zu ziehen.
+
+MR1A (MR1B):   Channel Mode Register 1
+
+Bit7           Bit6          Bit5         Bit4/3/2     Bit1/0
+
+RxRTS Control  RxIRQ Select  Error Mode   Parity       Bits per Character
+
+0=Disable      0=RxRDY       0=Char       000=even P.  00=5
+1=Enable       1=FFull                    001=Odd  P.  01=6
+                                          100=ohne P.  10=7
+                                                       11=8
+
+
+Die Register MR1A (MR1B) sind auf dieselbe Adresse wie MR2A (MR2B) gelegt.
+MR1A (MR1B) sind erreichbar, wenn vorher in das Register CRA (CRB) in die
+Bits 6/5/4 die Werte 001 geschrieben wurden. Anschliežend kann MR1A (MR1B)
+ein einziges Mal angesprochen werden, danach ist unter dieser Adresse MR2A
+(MR2B) erreichbar.
+
+MR2A (MR2B): Channel Mode Register 2
+
+Bit7/6         Bit5           Bit4           Bit3/2/1/0          Bit3/2/1/0
+
+Channel Mode   TxRTS Control  CTS En.Transm. Stopbits(6-8 Bit)   (5 Bit)
+
+00=Normal      0=Disable      0=Diasable     0000=0,56           1,06
+01=Echo        1=Enable       1=Enable       0111=1,00           1,50
+                                             1111=2,00           2,00
+
+Falls Bit 5 gesetzt ist, wird der Ausgang OP0 (bzw. OP1 f’r Kanal B)
+automatisch vom Chip f’r die RTS-Steuerung verwendet.
+
+
+CSRA  (CSRB): Clock-Select Register
+
+Bit 7/6/5/4                             Bit3/2/1/0
+
+Transmitter Clock                       Receiver Clock
+
+            Set1          Set2            Set1          Set2
+        (ACR-Bit7=0)   (ACR-Bit7=1)   (ACR-Bit7=0)   (ACR-Bit7=1)
+
+ 0000          50          75                50          75
+ 0001         110         110               110         110
+ 0010         134,5       134,5             134,5       134,5
+ 0011         200         150               200         150
+ 0100         300         300               300         300
+ 0101         600         600               600         600
+ 0110        1200        1200              1200        1200
+ 0111        1050        2000              1050        2000
+ 1000        2400        2400              2400        2400
+ 1001        4800        4800              4800        4800
+ 1010        7200        1800              7200        1800
+ 1011        9600        9600              9600        9600
+ 1100       38400       19200             38400       19200
+ 1101       Timer       Timer             Timer       Timer
+ 1110       IP4-16x     IP4-16x           IP3-16x     IP3-16x
+ 1111       IP4-1x      IP4-1x            IP3-1x      IP3-1x
+
+Mit dem h÷chsten Bits des ACR-Registers wird der Set f’r beide Schnittstellen
+festgelegt.
+
+CRA (CRB): Channel Command Register
+
+Bit7   Bit6/5/4                  Bit3/2          Bit1/0
+ -     Kommandos                 Transmitter     Receiver
+
+ 0     001: MR1 erreichen        01=Enable       01=Enable
+       010: Reset Receiver       10=Disable      10=Disable
+       011: Reset Transmitter
+       100: Reset Errors
+       110: Start Break
+       111: Stop Break
+
+SRA  (SRB):  Channel Status Register
+
+Bit7      Bit6     Bit5    Bit4     Bit3    Bit2    Bit1  Bit0
+Receive   Framing  Parity  Overrun  TxEmpty TxReady Fifo  RxReady
+Break     Error    Error   Error                    voll
+
+0=Nein    0=Nein   0=Nein  0=Nein   0=Nein   0=Nein 0=Nein 0=Nein
+1=Ja      1=Ja     1=Ja    1=Ja     1=Ja     1=Ja   1=Ja   1=Ja
+
+
+OPCR: Output Configuration Register
+
+Bit7     Bit6     Bit5     Bit4     Bit3/2         Bit1/0
+
+0=OPR-7  0=OPR-6  0=OPR-5  0=OPR-4  00=OPR-3       00=OPR-2
+1=TxRdyB 1=TxRdyA 1=RxRdyB 1=RxRdyA 01=C/T Ausgang 01=TxCl-A (16x)
+                   /FFullB  /FFullA 10=TxCl-B (1x) 10=TxCl-A (1x)
+                                    11=RxCl-B (1x) 11=RxCl-A (1x)
+
+OPR:  Output Port Register
+
+Mit den beiden zugeh÷rigen Adressen k÷nnen die Ausg„nge OP0-7 gesetzt
+werden, sofern diese Ausg„nge nicht zu Sonderfunktionen reserviert sind
+(siehe OPCR f’r Bit 2-7 und MR1A/B f’r die Bits 1/0).
+Das OPR-Register ist unter zwei Schreib-Adressen ansprechbar. Mit der
+ersten Adresse werden Bits gesetzt, mit der n„chsten Adresse gel÷scht.
+Die an den Ausg„ngen OP0-7 anliegenden Pegel sind komplement„r zu den
+Setz- bzw. L÷schkommandos. Wenn also Bit 3 gesetzt wird, so wird der
+Ausgang 3 auf Low gehen.
+
+ACR: Auxilary Control Register
+
+Bit 7 w„hlt die Listen f’r die den Clock-Select-Registern zug„nglichen
+Baudraten aus.
+
+Die Bits 6/5/4 kontrollieren den Counter/Timer Betrieb:
+
+000: Counter  IP2 ist Counter-Eingang, IP2 kann nicht RxCl-B Eingang sein
+011: Counter  Quelle ist der durch 16 geteilte Takt am Oszillatoreingang
+100: Timer    IP2 ist Timer Eingang, IP2 kann nicht RxCl-B Eingang sein
+101: Timer    IP2/16 ist Quelle, IP2 kann nicht RxCl Eingang sein
+110: Timer    Quelle ist der Oszillatoreingang
+111: Timer    Quelle ist der Oszillatoreingang geteilt durch 16
+
+Falls die Bits 3/2/1/0 gesetzt sind, k÷nnen Interrupts ausgel÷st werden, wenn
+an den Eing„ngen IP3/2/1/0 die Pegeleing„nge wechseln. Zur Interruptgenerierung
+muž zus„tzlich das entsprechende Bit des IMR-Registers gesetzt sein.
+
+CTUR: Counter/Timer upper Register    CTLR: Counter/Timer lower Register
+
+Diese Register enthalten 16-Bit Werte f’r den Counter bzw. Timer. Diese
+Register k÷nnen beschrieben und gelesen werden.
+
+
+
+    68681:                Lesezugriff               Schreibzugriff
+
+            $00402001: Mode Register A           Mode Register A
+            $00402003: Status Register A         Clock Select Register A
+            $00402005: ---                       Command Register A
+            $00402007: Rx Holding Register A     Tx Holding Register A
+            $00402009: Input Port Change         Aux. Control Register
+            $0040200B: Interrupt Status Register Interrupt Mask Register
+            $0040200D: Counter/Timer High        Counter/Timer Preload High
+            $0040200F: Counter/Timer Low         Counter/Timer Preload Low
+            $00402011: Mode Register B           Mode Register B
+            $00402013: Status Register B         Clock Select Register B
+            $00402015: ---                       Command Register B
+            $00402017: Rx Holding Register B     Tx Holding Register B
+            $00402019: Interrupt Vector Register Interrupt Vector Register
+            $0040201B: Input Port                Output Port Configuration
+            $0040201D: Start Counter             Set Output Bits
+            $0040201F: Stop Counter              Reset Output Bits
+
+Initialisierung:
+----------------
+
+Die folgende Routine initialisiert die Schnittstelle A f’r 9600 Baud in
+beiden Richtungen mit 8 Bit, ohne Parity und mit einem Stopbit. Zur
+Baudratenauswahl wird Set 2 genommen. Gleichzeitig wird der Timer
+so eingestellt, daß er eine Baudrate von 38400 Baud bereitstellt; dieser
+Wert fehlt ja im Set 2. Die ›bertragung soll mit der intern erzeugten
+16-fachen Baudrate synchronisiert werden.
+
+M68681   EQU     $00402000     ;fuer c't KAT-Ce
+MR1A     EQU     M68681+1
+MR2A     EQU     M68681+1
+CSRA     EQU     M68681+3
+CRA      EQU     M68681+5
+ACR      EQU     M68681+9
+CTUR     EQU     M68681+$D
+CTLR     EQU     M68681+$F
+SOPB     EQU     M68681+$1D
+
+Timerbaud EQU    3
+Baudrate  EQU    $BB
+Format    EQU    $13
+Stopbits  EQU    $17
+TimerCon  EQU    $E0
+
+InitA    move.b  #TimerCon,ACR      ;Timer-Betriebsart und Baudratenset
+         move.l  #Timerbaud/256,CTUR;Sonderbaudrate setzen
+         move.b  #Timerbaud,CTLR
+         move.b  #Baudrate,CSRA     ;Baudratenwert einsetzen
+         move.b  #$45,CRA           ;Reset Error Status
+         move.b  #$25,CRA           ;Reset Receiver
+         move.b  #$35,CRA           ;Reset Transmitter
+         move.b  #$15,CRA           ;Zugang zu MR1A einschalten
+         move.b  #Format,MR1A       ;Anzahl der Bits und Paritaet
+         move.b  #Stopbits,MR2A     ;Stopbits setzen
+         move.b  #1,SOPB            ;RTS einschalten
+         rts
+
+andere Beispiele f’r Einstellm÷glichkeiten der Parameter:
+
+Timerbaud: Diese benutzer-definierbare Baudrate kann berechnet werden durch
+---------- die Formel: Timerbaud = 115200 / Baudrate
+
+57600 Baud: $0002   38400 Baud: $0003   200 Baud: $0240   360 Baud: $140
+
+Baudrate: Das Baudratenbyte enth„lt im High-Nibble (Bits 4-7) die Empf„nger-
+--------- und im Low-Nibble (Bits 0-3) die Senderbaudrate. Bei gleichen Werten
+          sind die Nibble identisch.
+
+Empfänger 19200 Baud und Sender 19200 Baud:  $CC
+Empfänger Timer-Baud und Sender Timer-Baud:  $DD
+Empfänger  2000 Baud und Sender   300 Baud:  $74
+Empfänger  1200 Baud und Sender    75 Baud:  $60
+Empfänger    75 Baud und Sender  1200 Baud:  $06
+
+Format:   Dieses Byte wird in MR1A geschrieben. Wir lassen die 3 h÷chsten Bits
+-------   (RxRTS-Control, RxIRQ-Select, Error-Mode) gel÷scht und betrachten nur
+          die Anzahl der zu ›bertragenden Bits und die Parit„t.
+
+8 Bit, No   Parity: $13     7 Bit, No   Parity: $12     5 Bit, No   Parity: $10
+8 Bit, Even Parity: $03     7 Bit, Even Parity: $02     5 Bit, Even Parity: $00
+8 Bit, Odd  Parity: $07     7 Bit, Odd  Parity: $06     5 Bit, Odd  Parity: $04
+
+Stopbits: Im Register MR2A werden neben den Stopbits auch ein paar andere
+--------- Eigenschaften beschrieben. Wir setzen den Channel-Mode auf normal
+          (Bits 6 und 7 = 0), verhindern die TxRTS-Kontrolle (Bit 5 = 0) und
+          lassen den Transmitter nur arbeiten, wenn der CTS-Eingang es erlaubt
+          (Bit 4 = 1).
+
+Bei 6-8 Bit: 1   Stopbit :  $17      Bei 5 Bit: 1   Stopbit :  $10
+Bei 6-8 Bit: 1,5 Stopbits:  $18      Bei 5 Bit: 1,5 Stopbits:  $17
+Bei 6-8 Bit: 2   Stopbits:  $1F      Bei 5 Bit: 2   Stopbits:  $1F
+
+TimerCon:  Im ACR-Register wird neben dem Baudratenset (Bit 7 = 1 f’r Set 2)
+---------  auch der Counter/Timer definiert. In unserem Beispiel benutzen wir
+           den Timer, um aus dem 3,6864 MHz-Takt eine Sonderbaudrate zu basteln
+           (Bits 4-6 = 0). Falls der Counter oder Timer eine andere Aufgabe
+           erf’llen soll, m’ssen die Bits 6/5/4 entsprechend ge„ndert werden.
+           Da das Register ACR nur beschrieben, nicht aber gelesen werden kann,
+           muž bei jedem Zugriff die gesamte Bitkombination korrekt
+           geschrieben werden.
+
+
+Senden eines Bytes, das in Register D0 steht:
+---------------------------------------------
+
+M68681   EQU     $00402000     ;fuer c't KAT-Ce
+SRA      EQU     M68681+3
+THRA     EQU     M68681+7
+
+SendByte btst    #2,SRA        ;Transmitter fertig?
+         beq     SendByte      ;nein, dann warten
+         move.b  D0,THRA       ;Byte ins Senderegister schreiben
+         rts                   ;fertig
+
+
+Empfangen eines Bytes in Register D0:
+-------------------------------------
+
+M68681   EQU     $00402000     ;fuer c't KAT-Ce
+SRA      EQU     M68681+3
+RHRA     EQU     M68681+7
+
+LiesByte btst    #0,SRA        ;Byte eingetroffen?
+         beq     LiesByte      ;nein, dann warten
+         move.b  RHRA,D0       ;Byte ins Register lesen
+         rts                   ;fertig
+
+
+Nach diesen eher simplen Beispielen nun etwas Interessanteres: Wir schreiben
+ein Programm, welches Daten aus SerA interruptgesteuert einliest und in einen
+Ringpuffer schreibt. Wird der Platz eng, so senden wir ein Xoff-Signal, um den
+Sender zum Einlegen einer Pause zu veranlassen. Ist wieder gen’gend Platz
+vorhanden, folgt ein Xon-Signal, woraufhin der Sender seinen Betrieb wieder
+aufnehmen m÷ge.
+
+F’r die KAT-Ce 68070 ist der Interruptlevel 2 f’r den 68681 vorgegeben. Wir
+nehmen der Einfachheit halber die Vektornummer $68, die auch als Autovektor
+f’r Level 2 vorgesehen ist, und schreiben die zugeh÷rige Vektornummer $1A
+ins IVR-Register, da die KAT-Ce 68070 mit Vektorinterrupt arbeitet.
+F’r die KAT-Ce 1.3 oder 1.4 ist der 68681 auf Autovektorinterrupt mit
+Level 4 geschaltet, so daž die Adresse der Interruptroutine nach $70 gelegt
+werden muž.
+Im EPAC 68008 ...???
+Im EPAC 68000 letztlich ist Vektorinterrupt auf Level 5 angesagt, die Adresse
+der Interruptroutine kommt nach $74, das IVR wird mit $1D gef’llt.
+Die entsprechenden Stellen sind im Assemblerlisting mit * gekennzeichnet.
+
+Damit wir etwas von dem Vorgang sehen k÷nnen, rufen wir die Interruptroutine
+vom KAT-Ce Betriebssystem aus auf und geben alle empfangenen Bytes ’ber
+den Bildschirm aus. Die ben÷tigten Variablenadressen f’r Startpuffer usw.
+legen wir nach $900 ff., denn dort hat das KAT-Ce System Platz.
+Verbinden Sie den Seriellport A mit irgendeinem Rechner, der in der Lage ist,
+Textdateien zu senden. Falls Sie einen IBM-PC ’brig haben, definieren Sie
+seinen COM1-Port mit: MODE Com1:9600,N,8,1  und senden dann ein Textfile mit:
+COPY Name.Txt Com1:
+
+Falls Sie wirklich das Gl’ck haben sollten, ein korrekt gel÷tetes Verbindungs-
+kabel zu besitzen oder anfertigen zu k÷nnen, d’rfte auf Ihrem Hostrechner
+den Inhalt der Textdatei angezeigt werden.
+
+Das Testprogramm hat noch ein paar nette M÷glichkeiten f’r Neugierige:
+Durch Dr’cken eines Fragezeichens k÷nnen Sie w„hrend des Interruptbetriebes
+in den Monitor hinabsteigen und sich dort die Zeiger und den Inhalt des
+Ringpuffers ansehen.
+Beendet wird das Programm durch Dr’cken von ESC auf dem Hostrechner.
+
+test      lea     $4000,A0  ;Startadresse des Puffers
+          lea     $4100,A1  ;Endadresse des Puffers
+          jsr     InitInt   ;Init der Interruptroutine
+lop       jsr     Byteda    ;Byte im Puffer?
+          tst.l   D0
+          beq     TestKeypr ;vielleicht Taste am Host gedrueckt
+          jsr     Liesbyte  ;Byte aus Puffer lesen
+          move    #$9,-(A7) ;Asciout anwaehlen
+          trap    #4        ;Systemtrap ausfuehren
+TestKeypr move    #4,-(A7)  ;Keypress auf Hostrechner?
+          trap    #4
+          tst.b   D0        ;Taste gedrueckt?
+          beq     Lop       ;nein
+          move    #6,-(A7)  ;sonst Taste lesen
+          trap    #4
+          cmpi.b  #'?',D0   ;Fragezeichen?
+          beq     Monitor   ;ja, Monitor aufrufen
+          cmpi.b  #27,D0    ;ESC-Taste?
+          beq     Schluss   ;ja, Schluss machen
+          bra     lop       ;sonst weitermachen
+Monitor   move    #2,-(A7)  ;Monitor aufrufen
+          trap    #4
+          bra     Lop       ;danach weitermachen
+Schluss   jsr     ExitInt   ;Interruptroutine ausschalten
+          rts
+
+
+;Interruptverarbeitung von Zeichen, die auf Seriell-A eines 68681 ankommen
+;
+;A0 = Start-Adresse des Puffers, in dem die Zeichen abgelegt werden
+;A1 = letzter Speicherplatz dieses Puffers
+
+          nolist
+
+Startpuffer   EQU $900
+Endpuffer     EQU Startpuffer+4
+Lesezeiger    EQU Endpuffer+4
+Schreibzeiger EQU Lesezeiger+4
+Anzahl        EQU Schreibzeiger+4
+XoffAnz       EQU Anzahl+4
+XOnAnz        EQU XoffAnz+4
+XoffFlag      EQU Anzahl+4
+
+M68681        EQU $402000          ;68681 in KAT-Ce
+MR1A          EQU M68681+1
+MR2A          EQU M68681+1
+CSRA          EQU M68681+3
+CRA           EQU M68681+5
+RHRA          EQU M68681+7
+THRA          EQU M68681+7
+IVR           EQU M68681+$19
+IMR           EQU M68681+$B
+SetBits       EQU M68681+$1D
+
+Xon           EQU $11
+Xoff          EQU $13
+
+InitInt   movem.l A0/A1,-(A7)        ;A0 und A1 nicht veraendern
+          move.l  A0,Startpuffer     ;Zeiger in Variablen speichern
+          move.l  A0,Lesezeiger      ;
+          move.l  A0,Schreibzeiger
+          move.l  A1,Endpuffer
+          suba.l  A0,A1              ;Laenge des Puffers in A1
+          suba.l  #20,A1             ;Marke fuer Xoff
+          move.l  A1,XoffAnz         ;max noch fuer 20 Bytes Platz
+          suba.l  #100,A1            ;Marke fuer Xon
+          move.l  A1,XonAnz          ;Xon geben, wenn 120 Byte Platz 
+          clr.l   Anzahl             ;noch kein Zeichen angekommen
+          clr.b   XoffFlag           ;Flag loeschen
+          move.b  #$BB,CSRA          ;9600 Baud einstellen
+          move.b  #$45,CRA           ;Reset Error Status
+          move.b  #$25,CRA           ;Reset Receiver
+          move.b  #$35,CRA           ;Reset Transmitter
+          move.b  #$15,CRA           ;MR1A einschalten
+          move.b  #$13,MR1A          ;8 Bit, No Parity
+          move.b  #$17,MR2A          ;1 Stopbit
+          move.b  #$1,SetBits        ;RTS einschalten
+          move.b  #$2,IMR            ;Interrupt bei Eingang auf SerA
+          lea     InPuffer(PC),A0    ;Adresse der Interruptroutine
+          move.l  A0,$68          ;* ;auf Autovektorplatz 2 ablegen
+          move.b  #$1A,IVR        ;* ;Vektorzeiger auf $68 richten
+          move.b  #Xon,THRA          ;Sender einschalten
+          movem.l (A7)+,A0/A1        ;A0 und A1 wiederherstellen
+          andi    #$F8FF,SR          ;Interruptmaske loeschen
+          rts
+          
+ExitInt   clr.b   IMR                ;Interrupts aus
+          rts
+
+InPuffer  movem.l D1/A0,-(A7)
+          move.l  Schreibzeiger,A0    ;Adresse des naechsten Speicherplatzes
+          cmpa.l  Endpuffer,A0        ;Ende des Puffers erreicht?
+          bne     NichtSEnd           ;nein
+          move.l  Startpuffer,A0      ;sonst am Anfang weitermachen
+NichtSEnd move.b  RHRA,(A0)+          ;Byte aus 68681 lesen und speichern
+          move.l  A0,Schreibzeiger    ;neuen Zeiger merken
+          addq.l  #1,Anzahl           ;ein Byte mehr im Puffer
+          tst.b   XoffFlag            ;Flag schon gesetzt?
+          bne     NoXoff              ;ja
+          move.l  Anzahl,D1
+          cmp.l   XoffAnz,D1          ;soll Xoff gegeben werden?
+          bne     NoXoff              ;nein
+          move.b  #Xoff,THRA          ;sonst Xoff senden
+          move.b  #$ff,XoffFlag       ;und Flag setzen
+NoXoff    movem.l (A7)+,A0/D1
+          rte
+          
+ByteDa    move.l  Anzahl,D0
+          rts
+          
+LiesByte  tst.l   Anzahl              ;wartet ein Byte im Puffer?
+          beq     Liesbyte            ;nein, warten
+          movem.l A0/D1,-(A7)         ;A0 und D1 unveraendert lassen
+          moveq   #0,D0               ;D0 loeschen
+          move.l  Lesezeiger,A0       ;Adresse des naechsten Speicherplatzes
+          cmpa.l  Endpuffer,A0        ;Ende des Puffers erreicht?
+          bne     NichtLEnd           ;nein
+          move.l  Startpuffer,A0      ;sonst am Anfang weitermachen
+NichtLEnd move.b  (A0)+,D0            ;Byte aus Puffer lesen
+          move.l  A0,Lesezeiger       ;neuen Zeiger ablegen
+          subq.l  #1,Anzahl
+          tst.b   XoffFlag            ;wurde Xoff gegeben?
+          beq     NoXon               ;nein
+          move.l  Anzahl,D1           ;aktuelle Anzahl von Bytes
+          cmp.l   XonAnz,D1           ;Xon geben?
+          bne     NoXon               ;nein, Platz reicht nicht aus
+          move.b  #Xon,THRA           ;Xon senden
+          clr.b   XoffFlag            ;Flag loeschen
+NoXon     movem.l (A7)+,A0/D1         ;alte Werte nach A0 und D1
+          rts
+
+Am Rande sei noch eine Besonderheit bemerkt, die beim Test dieses Programms
+auffiel: Ich habe zwischen der Xoff- und der Xon-Marke zun„chst nur 5 Bytes
+Platz gelassen, um beim Test eine bessere ’bersicht zu haben. Als Sender diente
+ein Plot-Programm, das ’ber eine 6850-Schnittstelle (ein etwas antiquierter
+Seriellwandler) die Daten zum 68681 schickte. ýrgerlicherweise blieb der
+Sender st„ndig h„ngen, wohingegen ein simples Programm, das immer denselben
+Teststring sandte, einwandfrei funktionierte.
+Der Grund war nicht leicht zu finden: F’r die Berechnung der Plotbefehle
+brauchte das Sendeprogramm st„ndig Rechenzeit. Wenn nun w„hrend dieser
+Zeit das 68681-Interruptprogramm ein Xoff schickte und ein Xon hinterherkam,
+bevor das Xoff gelesen werden konnte, so verschluckte der 6850 das Xon, und der
+Sender durfte nicht weitermachen. Erst bei einem gr÷žeren Abstand zwischen der
+Xoff- und Xon-Anzahl war einwandfreier Transfer m÷glich.
+Bei einer Verbindung, bei der auf beiden Seiten ein 68681 sitzt, kann so etwas
+durch die Fifo-Architektur des Empf„ngers kaum passieren.
+
+Counter- und Timer-Anwendungen
+------------------------------
+Eine M÷glichkeit besteht in der Definition von Baudraten, die in den beiden
+Sets fehlen, vielleicht, weil sie etwas ausgefallen sind. Wir gehen vom Takt
+3,6864 MHz aus. Diese Frequenz kann vom Counter durch Division in kleinere Werte
+’berf’hrt werden, indem der Divisor in das Counter-Preload-Register geschrieben
+wird.
+Der Counter z„hlt dieses 16-Bit-Register im 3,6864 MHz-Takt auf Null herunter,
+danach wird das intern erzeugte Signal invertiert; durch diese letztere
+Mažnahme wird der neue Takt halbiert. Jetzt greift noch
+eine Division durch 16, um zum Einlesen eine genaue Synchronisierung auf die
+Mitte der Datenbits zu garantieren.  Insgesamt ist die erzeugte interne
+Frequenz 3686400 / (32 * Divisor) Hz bzw der Divisor ist:
+3686400 / (32* Wunschbaudrate).
+Wollen wir also eine Baudrate von 3600 Baud erreichen, so muž der Divisor
+den Wert 32 (dezimal) bekommen, f’r den besonders krummen Wert von 4567 Baud
+nehmen wir gerundet 25. Die h÷chste auf diese Weise m÷gliche Baudrate ist
+f’r den Divisor 2 erreichbar, das sind 57600 Baud.
+In dem Initialisierungsprogramm f’r die serielle Schnittstelle A ist bereits
+eine auf diese Weise erzeugte Baudrate von 38400 enthalten, die im Standardset
+2 fehlt. Im ACR-Register m’ssen f’r diese Betriebsart die Bits 6/5/4 die
+Werte 0/1/1 erhalten.
+
+›ber den Eingang IP2 k÷nnen externe Impulse gez„hlt werden, dazu darf IP2 aber
+nicht als Receiverclockeingang f’r Kanal B benutzt werden. In ACR m’ssen die
+Bits 6/5/4 auf 0/0/0 gesetzt werden. Im Datenblatt wird die maximale Frequenz
+leider nicht angegeben, bis ’ber 100 kHz funktioniert es jedenfalls problemlos.
+Auch in dieser Betriebsart z„hlt der Counter den im Counter-Preload-Register
+vorgegebenen 16-Bit Wert herunter, dieser Wert kann gelesen werden, dazu sollte
+allerdings ein Stop-Counter Kommando vorausgehen. Falls der Counter auf 0
+heruntergez„hlt ist, wird im ISR-Register das Bit 3 gesetzt. ›ber IMR kann
+dieses 3. Bit auch zur Erzeugung eines Interrupts herangezogen werden.
+Zu einer genauen Frequenzmessung brauchen wir noch einen Vergleichswert. Dazu
+k÷nnen wir eine Z„hlschleife im 68000 mit bekannter Laufzeit nehmen. Wichtig
+ist allerdings, daž gleichartig programmierte Schleifen f’r die Prozessoren
+68000, 68008, 68010, 68020, 68030, 68070 verschiedene Geschwindigkeiten
+haben, letztlich also nicht untereinander ’bertragbar sind. Wir helfen uns
+mit einem Trick, der allerdings nur m÷glich ist, wenn eine der beiden Seriell-
+schnittstellen gerade nicht ben÷tigt wird, zum Beispiel Seriell A.
+Diese Schnittstelle wird auf Autoloop gestellt, so daž ein gesendetes Byte
+intern zur’ckgeschickt wird. Da wir die Baudrate, mit der dieses geschieht,
+nat’rlich selbst einstellen, ist auch die Zeit bekannt, die f’r diesen Vorgang
+n÷tig ist, unabh„ngig von der Sorte des Prozessors. Wir stellen die
+Schnittstelle auf eine 'glatten' Wert von 50 Baud ein; mit je einem Start- und
+Stopbit sowie 8 Datenbits dauert die ›bertragung genau 0,2 Sekunden. Die
+in dieser Zeit auf IP2 eingegangenen Impulse entsprechen also eine Frequenz,
+die dem 5-fachen des gez„hlten Wertes entspricht, damit ist die maximale
+auf diese Weise mežbare Frequenz 327680 Hz.
+Die folgende Routine ermittelt diesen Wert in Register D1 und speichert ihn in
+$900.
+Bei der ersten Messung muž der 68681 eine undefinierte Zeit warten, bis
+das Startbit des Dummy-Bytes losgeschickt wird, denn es ist nicht bekannt,
+wie lange es dauert, bis der interne Baudratengenerator nach der Neudefinition
+der ›bertragungsgeschwindigkeit mit dem Senden beginnen kann. Dieses Problem
+umgehen wir, indem eine Messung vorabgesetzt wird, erst der zweite Wert
+ist g’ltig. Sollten Sie nur eine einzige Messung vornehmen, so k÷nnen Sie bei
+konstanter Baudrate beobachten, wie die Mežergebnisse um den korrekten
+Mittelwert streuen.
+
+
+M68681   EQU     $00402000     ;fuer c't KAT-Ce
+MR1A     EQU     M68681+1
+MR2A     EQU     M68681+1
+CSRA     EQU     M68681+3
+CRA      EQU     M68681+5
+RHRA     EQU     M68681+7
+THRA     EQU     M68681+7
+ACR      EQU     M68681+9
+IMR      EQU     M68681+$B
+ISR      EQU     M68681+$B
+CTUR     EQU     M68681+$D
+CTLR     EQU     M68681+$F
+StartCt  EQU     M68681+$1D
+StopCt   EQU     M68681+$1F
+
+
+Preload   EQU    $FFFF ;Startwert fuer Preload Register
+Baudrate  EQU    $00   ;50 Baud in Set 1
+Format    EQU    $13   ;8 Bit, No Parity
+Stopbits  EQU    $87   ;Local Loopback, 1 Stopbit
+TimerCon  EQU    $00   ;Set 1 fuer 50 Baud, Count IP2
+
+Ergebnis  EQU    $900  ;dort steht anschliessend das Ergebnis der Messung
+
+CountF   clr.b   IMR                ;keinen Interrupt erlauben
+         move.b  #TimerCon,ACR      ;Timer-Betriebsart und Baudratenset
+         move.b  #Preload/256,CTUR  ;Preloadwerte setzen
+         move.b  #Preload,CTRL
+         move.b  #Baudrate,CSRA     ;Baudratenwert 50 einsetzen
+         move.b  #$45,CRA           ;Reset Error Status
+         move.b  #$25,CRA           ;Reset Receiver
+         move.b  #$35,CRA           ;Reset Transmitter
+         move.b  #$15,CRA           ;Zugang zu MR1A einschalten
+         move.b  #Format,MR1A       ;Anzahl der Bits und Paritaet
+         move.b  #Stopbits,MR2A     ;Stopbits setzen
+         bsr     Messen             ;eine ungueltige Messung
+         bsr     Messen             ;die zweite gilt
+         move.b  CTUR,D0            ;High-Byte des Messwertes
+         rol.w   #8,D0              ;schieben
+         move.b  CTLR,D0            ;Lowbyte dazu
+         move.w  #$FFFF,D1          ;Startwert des Counters war $FFFF
+         sub.w   D0,D1              ;jetzt stehen in D1 die Anzahl der Impulse
+         andi.l  #$FFFF,D1          ;High-Wrod loeschen
+         mulu    #5,D1              ;mal 5 = Endergebnis in D1
+         move.l  D1,Ergebnis
+         rts
+Messen   tst.b   StartCt            ;Counter starten
+         move.b  #$5A,THRA          ;irgendein Byte losschicken
+warten   btst    #1,ISR             ;warte, bis Byte angekommen
+         beq     warten
+         tst.b   StopCt             ;Counter anhalten
+         tst.b   RHRA               ;Byte als Dummy lesen
+         rts
+
+Als letztes Beispiel wollen wir den Timer benutzen, um regelm„žige Interrupts
+zu erzeugen, etwa um Programmierzeiten messen zu k÷nnen. Als Ausgangsfrequenz
+gehen wir von den 3,6864 MHz aus, das Ziel sind Interrupts im Abstand von 1/100
+Sekunde. Der Takt muž durch 36864 geteilt werden, wir w„hlen Modus, in dem
+durch 16 vorgeteilt wird und schreiben in die Bits 6/5/4 des ACR 1/1/1. Das
+Timer/Counter-Preload-Register erh„lt den Wert 1152 =36864/(2*16). Im
+IMR-Register wird mit Bit 3 die Interrupterzeugung zugelassen, die Interrupts
+werden wie oben im Spoolerbeispiel f’r die KAT-Ce 68070 aufbereitet. F’r die
+anderen Rechner geht das Verfahren ebenfalls wie vorher erkl„rt.
+In der Interruptroutine selbst wird die seit Initialisierung vergangene Uhrzeit
+in Hundertsel Sekunden, Sekunden, Minuten, Stunden gemessen und in den
+Speicherstellen $900 bis $903 abgelegt.
+
+M68681        EQU $402000          ;68681 in KAT-Ce
+ACR           EQU M68681+9
+CTUR          EQU M68681+$D
+CTUL          EQU M68681+$F
+IMR           EQU M68681+$B
+IVR           EQU M68681+$19
+StopCt        EQU M68681+$1F
+
+Hundertstel   EQU $900
+Sekunden      EQU $901
+Minuten       EQU $902
+Stunden       EQU $903
+
+InitInt   move.b  #$70,ACR           ;Timerfrequenz = 3,6864 MHz / 16
+          move.b  #$4,CTUR           ;High-Byte von 1152
+          move.b  #$80,CTUL          ;Low -Byte von 1152
+          move.b  #$8,IMR            ;Interrupt bei Nulldurchgang des Timers
+          lea     TimerInt(PC),A0    ;Adresse der Interruptroutine
+          move.l  A0,$68          ;* ;auf Autovektorplatz 2 ablegen
+          move.b  #$1A,IVR        ;* ;Vektorzeiger auf $68 richten
+          clr.l   Hundertstel        ;alle Zeitzaehler loeschen
+          andi    #$F8FF,SR          ;Interruptmaske loeschen
+          rts
+
+ExitInt   clr.b   IMR                ;Interrupts ausschalten
+          tst.b   Stopct
+          rts
+
+TimerInt  tst.b   StopCt             ;Interruptflag loeschen, kein Stop!!
+          addq.b  #1,Hundertstel     ;Zeitzaehler erhoehen
+          cmpi.b  #100,Hundertstel   ;100 erreicht?
+          bne     TimerRTE           ;nein
+          clr.b   Hundertstel        ;sonst loeschen
+          addq.b  #1,Sekunden        ;erhoehen
+          cmpi.b  #60,Sekunden       ;Minute voll?
+          bne     TimerRTE           ;nein
+          clr.b   Sekunden           ;sonst loeschen
+          addq.b  #1,Minuten         ;Minuten erhoehen
+          cmpi.b  #60,Minuten        ;Stunde voll?
+          bne     TimerRTE           ;nein
+          clr.b   Minuten            ;loeschen
+          addq.b  #1,stunden         ;Stunden erhoehen
+TimerRTE  rte                        ;fertig
+

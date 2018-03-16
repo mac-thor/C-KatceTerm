@@ -1,0 +1,18 @@
+
+** Fri Mar 16 CET 2018
+-- Removed usage of strlcpy
+-- Update fo autoconf tools
+
+** Sun Jun 13 CEST 2004
+-- autoconf automake tools update
+-- new comandline options for katceterm, katzuasc and asczukat
+-- usleep replacement funktions for systems without it
+-- now the internationalization library is used
+
+** Tue Oct 28 CET 2003
+-- katzuasc and asczukat now generates correct files
+-- katceterm works (most of the time)
+
+** Thu Mar  8 MET 2001
+-- Initial port
+

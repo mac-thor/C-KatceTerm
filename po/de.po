@@ -1,0 +1,28 @@
+domain "katceterm"
+# File:asczukat.c, line:309
+msgid  "\nCannot create file %s\n"
+msgstr "\nKann das File %s nicht erstellen\n"
+# File:asczukat.c, line:293
+msgid  "\nCannot open file %s\n"
+msgstr "\nKann das File %s nicht lesen\n"
+# File:katceterm.c, line:259
+msgid  "Could not open serial device (%s), error: %s\n"
+msgstr "Die serielle Schnittstelle (%s) konnte nicht geöffnet werden, Fehler: %s\n"
+# File:katceterm.c, line:196
+msgid  "KAT-Ce Send_Katce() error: %s\n"
+msgstr "KAT-Ce Send_Katce() Fehler: %s\n"
+# File:asczukat.c, line:185
+msgid  "NOTICE: Option %s is not implemented\n"
+msgstr "HINWEIS: Die Option %s ist nicht implementiert\n"
+# File:katceterm.c, line:317
+msgid  "Turn on the power of your KatCe now!     <Return>"
+msgstr "Schalten Sie jetzt den Strom für Ihre KatCe ein!   <RETURN>"
+# File:katzuasc.c, line:204
+msgid  "usage: %s [-h] [-d] [-u] [-t tab_width] [-i inputfile] [-o outputfile]\n"
+msgstr "Aufruf: %s [-h] [-d] [-u] [-t tab_width] [-i inputfile] [-o outputfile]\n"
+# File:asczukat.c, line:241
+msgid  "usage: %s [-h] [-d] [-u] [-t tab_width] [-i inputfile] -o outputfile\n"
+msgstr "Aufruf: %s [-h] [-d] [-u] [-t tab_width] [-i inputfile] -o outputfile\n"
+# File:katceterm.c, line:936
+msgid  "usage: %s [-h] [-d] [-u] [-t tab_width] [-l serial_device] [-s serial_speed]\n"
+msgstr "Aufruf: %s [-h] [-d] [-u] [-t tab_width] [-l serial_device] [-s serial_speed]\n"
